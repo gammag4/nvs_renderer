@@ -14,17 +14,16 @@ https://github.com/user-attachments/assets/7071a7dc-cba4-410b-ab48-004afeadcf46
 
 ## Usage
 
+Install requirements:
+
+- Some conda distribution (we recommend using [Miniforge](https://conda-forge.org/download/))
+- NVIDIA drivers that support CUDA >= 13.0
+
 Clone this repo:
 
 ```bash
 git clone https://github.com/gammag4/nvs_renderer
 cd nvs_renderer
-```
-
-Install required libraries:
-
-```bash
-sudo apt install libglfw3 libglfw3-dev libglm-dev
 ```
 
 Create conda environment:
