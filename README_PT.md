@@ -6,11 +6,13 @@ Um renderizador OpenGL para modelos PyTorch de 3D Novel View Synthesis (NVS).
 
 Por enquanto, consegue renderizar cenas do [VDST](https://github.com/gammag4/vdst).
 
-Alguns exemplos:
+<!-- vdst -->
+https://github.com/user-attachments/assets/35a33c5e-fd6a-473b-b55a-ea6f4a667a93
 
-https://github.com/user-attachments/assets/16de9309-e82a-4c30-a4e0-e8285eb4e954
+<!-- lvsm -->
+<!-- https://github.com/user-attachments/assets/16de9309-e82a-4c30-a4e0-e8285eb4e954
 
-https://github.com/user-attachments/assets/7071a7dc-cba4-410b-ab48-004afeadcf46
+https://github.com/user-attachments/assets/7071a7dc-cba4-410b-ab48-004afeadcf46 -->
 
 ## Uso
 
