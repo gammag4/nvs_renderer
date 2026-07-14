@@ -20,14 +20,19 @@ model_path = './checkpoints/vdst.pt'
 config, _ = load_config(config_path, [])
 
 dataset = WildRGBDDataset(
-    path=config.train.data.datasets.wildrgbd.path,
-    n_sources=config.train.data.n_sources,
-    n_targets=1,
+    config.train.data.datasets.wildrgbd.path,
+    config.train.data.n_sources,
+    1,
     output_dims=config.train.data.output_dims,
-    seed=config.setup.seed
+    dataset_type=config.train.data.datasets.wildrgbd.dataset_type,
+    val_split=0.005,
+    test_split=0.02,
+    split='train',
+    test_category='truck',
+    seed=42
 )
 
-scene = dataset[0]
+scene = dataset[6]
 
 scene.targets.images = None
 scene.targets.depths = None
@@ -44,7 +49,7 @@ checkpoint = torch.load(
     map_location=device,
     weights_only=False
 )
-model.load_state_dict(device)
+model.load_state_dict(checkpoint)
 model.eval()
 
 R, t = scene.sources.R[0], scene.sources.t[0]
