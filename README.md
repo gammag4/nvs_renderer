@@ -6,8 +6,13 @@ An OpenGL renderer for 3D Novel View Synthesis (NVS) PyTorch models.
 
 For now, it can render scenes from [VDST](https://github.com/gammag4/vdst).
 
-<!-- vdst -->
+Rendered scene:
+
 https://github.com/user-attachments/assets/35a33c5e-fd6a-473b-b55a-ea6f4a667a93
+
+Source images:
+
+![Source images](results/sources.png)
 
 <!-- lvsm -->
 <!-- https://github.com/user-attachments/assets/16de9309-e82a-4c30-a4e0-e8285eb4e954
