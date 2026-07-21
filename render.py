@@ -264,12 +264,15 @@ def render_model(n_frames, initial_T, render, device, render_resolution, window_
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--module", required=True)
+    parser.add_argument("--scene_index", required=False, default=0)
     args = parser.parse_args()
-    
     path = args.module
+    scene_index = int(args.scene_index)
+    
     name = os.path.splitext(os.path.split(path)[-1])[0]
     module_spec = util.spec_from_file_location(name, path)
     module = util.module_from_spec(module_spec)
+    module.scene_index = scene_index
     module_spec.loader.exec_module(module)
     
     (

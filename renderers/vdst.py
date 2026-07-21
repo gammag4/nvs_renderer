@@ -19,6 +19,15 @@ model_path = './checkpoints/vdst.pt'
 
 config, _ = load_config(config_path, [])
 
+model = VDST(config.model).to(device)
+checkpoint = torch.load(
+    model_path,
+    map_location=device,
+    weights_only=False
+)
+model.load_state_dict(checkpoint)
+model.eval()
+
 dataset = WildRGBDDataset(
     config.train.data.datasets.wildrgbd.path,
     config.train.data.n_sources,
@@ -32,7 +41,7 @@ dataset = WildRGBDDataset(
     seed=42
 )
 
-scene = dataset[6]
+scene = dataset[scene_index]
 
 scene.targets.images = None
 scene.targets.depths = None
@@ -42,15 +51,6 @@ for p in (scene.sources, scene.targets):
     for k in p.keys():
         if isinstance(p[k], torch.Tensor):
             p[k] = p[k].to(device)
-
-model = VDST(config.model).to(device)
-checkpoint = torch.load(
-    model_path,
-    map_location=device,
-    weights_only=False
-)
-model.load_state_dict(checkpoint)
-model.eval()
 
 R, t = scene.sources.R[0], scene.sources.t[0]
 initial_T = torch.concat([torch.concat([R, t.unsqueeze(-1)], dim=-1), torch.tensor([0.0, 0.0, 0.0, 1.0], device=device).reshape(1, -1)], dim=-2)

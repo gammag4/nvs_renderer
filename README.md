@@ -47,7 +47,7 @@ Clone [VDST](https://github.com/gammag4/vdst) to the folder `VDST` and follow in
 Build and run:
 
 ```bash
-python render.py --module renderers/vdst.py
+python render.py --module renderers/vdst.py --scene_index 0
 ```
 
 Controls are WASD for forward, left, backward, right, left ctrl/space for down/up, mouse for camera movement and T for toggling depth map if there is one.
@@ -74,7 +74,9 @@ Where:
 
 #### As a script
 
-Crate a module similar to `renderers/vdst.py` that exports all the parameters described in the previous section.
+Crate a module similar to `renderers/vdst.py` that exports all the parameters described in the previous section and uses the following args:
+
+- `scene_index: int`: The index of the scene to be used from the dataset.
 
 Then do the usual configuration, build and run:
 
