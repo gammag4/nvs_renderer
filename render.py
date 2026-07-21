@@ -48,6 +48,7 @@ def get_tensor_info(tensor: torch.Tensor, is_image) -> dict:
     if is_image:
         tensor = (tensor * 0.5 + 0.5).clamp(0, 1)
     else:
+        tensor = torch.where(tensor == 0, 1e+3, tensor)
         tensor = tensor.clamp(1e-3, 1e+3) # from 1mm to 1km
         tensor = 1.0 / tensor
         tensor = tensor / tensor.max()
