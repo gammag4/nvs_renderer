@@ -6,6 +6,7 @@ from easydict import EasyDict as edict
 import torch
 import pygame
 import pygame_gui
+import einx
 
 import profiler
 
@@ -56,9 +57,9 @@ def get_tensor_info(tensor: torch.Tensor, is_image) -> dict:
     tensor = (tensor * 255).to(dtype=torch.uint8)
     
     if is_image:
-        tensor = tensor.permute(1, 2, 0)
+        tensor = einx.id('c h w -> h w c', tensor)
     else:
-        tensor = tensor.unsqueeze(-1).repeat(1, 1, 3)
+        tensor = einx.id('h w -> h w 3', tensor)
     
     # alpha channel
     ones = torch.ones((*tensor.shape[-3:-1], 1), dtype=tensor.dtype, device=tensor.device) * 255
@@ -84,7 +85,7 @@ def get_tensor_info(tensor: torch.Tensor, is_image) -> dict:
     return res
 
 
-def render_func(frame_index, render, T):
+def render_func(frame_index, render, T, sources):
     """
     Returns a GPU tensor of shape (3, 512, 512) in CUDA memory.
     This should not be changed bc it will be used later with images this shape.
@@ -94,8 +95,12 @@ def render_func(frame_index, render, T):
     image, depth = render(T, frame_index)
     image = get_tensor_info(image, is_image=True)
     depth = get_tensor_info(depth, is_image=False)
+    if sources is not None:
+        source_images = get_tensor_info(einx.id('b c h w -> c h (b w)', sources.images), is_image=True).tensor
+        source_depths = get_tensor_info(einx.id('b c h w -> (c h) (b w)', sources.depths), is_image=False).tensor
+        sources = einx.id('b h w c -> (b h) w c', torch.stack([source_images, source_depths]))
     
-    return image, depth
+    return image, depth, sources
 
 
 def get_controls(dt, is_navigating):
@@ -136,9 +141,10 @@ def get_controls(dt, is_navigating):
     return controls
 
 
-def render_model(n_frames, initial_T, render, device, render_resolution, window_resolution=(800, 800)):
+def render_model(sources, n_frames, initial_T, render, device, render_resolution, window_resolution=(800, 800)):
     w, h = render_resolution
     win_w, win_h = window_resolution
+    current_res = window_resolution
     
     R = initial_T[:3, :3]
     x, y, z = (-R.T @ initial_T[:3, 3:]).squeeze().tolist()
@@ -153,11 +159,13 @@ def render_model(n_frames, initial_T, render, device, render_resolution, window_
     
     is_navigating = True
     is_playing = False
+    is_rendering_depth = False
+    is_displaying_source_images = False
     
     pygame.mouse.set_visible(False)
     pygame.event.set_grab(True)
     
-    surface = pygame.Surface((w, h))
+    surface = pygame.Surface(render_resolution)
     
     frame_index = 0
     time_slider = pygame_gui.elements.UIHorizontalSlider(
@@ -183,8 +191,6 @@ def render_model(n_frames, initial_T, render, device, render_resolution, window_
         time_slider.hide()
         play_button.hide()
     
-    rendering_depth = False
-    
     # Control loopimport asyncio
     clock = pygame.time.Clock()
     while True:
@@ -200,7 +206,17 @@ def render_model(n_frames, initial_T, render, device, render_resolution, window_
                 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_t:
-                        rendering_depth = not rendering_depth
+                        is_rendering_depth = not is_rendering_depth
+                    if event.key == pygame.K_r and sources is not None:
+                        is_displaying_source_images = not is_displaying_source_images
+                        if is_displaying_source_images:
+                            current_res = (window_resolution[0] * 2, window_resolution[1])
+                            screen = pygame.display.set_mode(current_res)
+                            surface = pygame.Surface((render_resolution[0] * 4, render_resolution[1] * 2))
+                        else:
+                            current_res = window_resolution
+                            screen = pygame.display.set_mode(current_res)
+                            surface = pygame.Surface(render_resolution)
                     if event.key == pygame.K_ESCAPE:
                         if not is_navigating:
                             pygame.quit()
@@ -245,14 +261,18 @@ def render_model(n_frames, initial_T, render, device, render_resolution, window_
             
             controls = get_controls(dt, is_navigating)
             T, current_state = compute_transform_matrix(controls, current_state, device)
-            image, depth = render_func(frame_index, render, T)
-            img_to_render = depth if rendering_depth and depth is not None else image
-            canvas = img_to_render.tensor.permute(1, 0, 2)[:, :, :3].cpu().numpy()
+            image, depth, sources_new = render_func(frame_index, render, T, sources)
+            img_to_render = depth if is_rendering_depth and depth is not None else image
+            img_to_render = img_to_render.tensor
+            if is_displaying_source_images and sources is not None:
+                img_to_render = img_to_render.repeat_interleave(repeats=2, dim=0).repeat_interleave(repeats=2, dim=1)
+                img_to_render = einx.id('b h w c -> h (b w) c', torch.stack([sources_new, img_to_render]))
+            canvas = einx.id('h w c -> w h c', img_to_render)[:, :, :3].cpu().numpy()
             
             pygame.surfarray.blit_array(surface, canvas)
             
             # Render camera feed
-            screen.blit(pygame.transform.scale(surface, window_resolution), (0, 0))
+            screen.blit(pygame.transform.scale(surface, current_res), (0, 0))
             
             if not is_navigating:
                 manager.draw_ui(screen)
@@ -281,20 +301,23 @@ if __name__ == '__main__':
         initial_T,
         render,
         device,
-        render_resolution
+        render_resolution,
+        sources
     ) = [getattr(module, n) for n in [
         'n_frames',
         'initial_T',
         'render',
         'device',
         'render_resolution'
+    ]] + [getattr(module, n, None) for n in [
+        'sources'
     ]]
     
     window_resolution = getattr(module, 'window_resolution', None)
     
     with profiler.Profiler(should_profile=True, warmup=20):
         # T (4, 4), render(T) -> img (c, h, w), device, resolution
-        render_model(n_frames, initial_T, render, device, render_resolution, window_resolution or (800, 800))
+        render_model(sources, n_frames, initial_T, render, device, render_resolution, window_resolution or (800, 800))
     
     profiler.print_results()
     # profiler.dump('profiler_dump.pt')

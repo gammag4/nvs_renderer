@@ -50,8 +50,14 @@ Build and run:
 python render.py --module renderers/vdst.py --scene_index 0
 ```
 
-Controls are WASD for forward, left, backward, right, left ctrl/space for down/up, mouse for camera movement and T for toggling depth map if there is one.
-Press ESC once to unlock the mouse and press twice to close.
+Controls are:
+
+- `WASD`: Forward, left, backward, right;
+- `Ctrl esquerdo / espaço`: Down/up;
+- `Mouse`: Camera movement;
+- `T`: Toggle depth map if there is one;
+- `R`: Toggle source views if they are available;
+- Press `ESC` once to unlock the mouse and press twice to close.
 
 ### Using with other models
 
@@ -60,7 +66,7 @@ Press ESC once to unlock the mouse and press twice to close.
 To render using another model, import and use the function `render_model` with the following format:
 
 ```py
-render_model(n_frames, initial_T, render, device, render_resolution, window_resolution=(800, 800))
+render_model(sources, n_frames, initial_T, render, device, render_resolution, window_resolution or (800, 800))
 ```
 
 Where:
@@ -71,6 +77,7 @@ Where:
 - `device: str`: Which device to use (should be a CUDA device)
 - `render_resolution: (int, int)`: Which resolution to use for rendering images (should have the same shape as `render(T)` output)
 - `window_resolution: (int, int)`: (optional) Which resolution to use for the window
+- `sources: edict(images: tensor, depths: tensor)`: (optional) The source images and depths
 
 #### As a script
 

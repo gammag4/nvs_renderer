@@ -50,8 +50,14 @@ Faça a build e rode:
 python render.py --module renderers/vdst.py --scene_index 0
 ```
 
-Os controles são WASD para frente, esquerda, trás, direita, ctrl esquerdo/espaço para baixo/cima, mouse para movimentação de câmera e T para alternar mapa de distância se houver um.
-Pressione ESC uma vez para destravar o mouse e pressione duas para fechar.
+Os controles são:
+
+- `WASD`: Frente, esquerda, trás, direita;
+- `Ctrl esquerdo / espaço`: Baixo/cima;
+- `Mouse`: Movimentação de câmera;
+- `T`: Alternar mapa de distância se houver um;
+- `R`: Alternar visões-fonte se estiverem disponíveis;
+- Pressione `ESC` uma vez para destravar o mouse e pressione duas para fechar.
 
 ### Usando com outros modelos
 
@@ -60,7 +66,7 @@ Pressione ESC uma vez para destravar o mouse e pressione duas para fechar.
 Para renderizar usando outro modelo, importe e use a função `render_model` com o seguinte formato:
 
 ```py
-render_model(n_frames, initial_T, render, device, render_resolution, window_resolution=(800, 800))
+render_model(sources, n_frames, initial_T, render, device, render_resolution, window_resolution or (800, 800))
 ```
 
 Onde:
@@ -71,6 +77,7 @@ Onde:
 - `device: str`: Qual dispositivo usar (deve ser um dispositivo CUDA)
 - `render_resolution: (int, int)`: Qual resolução usar para renderizar imagens (deve ter o mesmo shape que a saída de `render(T)`)
 - `window_resolution: (int, int)`: (opcional) Qual resolução usar para a janela
+- `sources: edict(images: tensor, depths: tensor)`: (opcional) As imagens e profundidades das visões-fonte
 
 #### Como um script
 

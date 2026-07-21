@@ -3,6 +3,7 @@ import sys
 sys.path.append(os.path.abspath('vdst'))
 import torch
 import torch.amp as amp
+from easydict import EasyDict as edict
 
 from utils.config import load_config
 from dataset.wildrgbd import WildRGBDDataset
@@ -12,7 +13,7 @@ from model.model import VDST
 n_frames = 1
 device = 'cuda:0'
 render_resolution = (256, 256)
-window_resolution = (800, 800)
+window_resolution = (512, 512)
 
 config_path = './vdst/config.yaml'
 model_path = './checkpoints/vdst.pt'
@@ -54,6 +55,11 @@ for p in (scene.sources, scene.targets):
 
 R, t = scene.sources.R[0], scene.sources.t[0]
 initial_T = torch.concat([torch.concat([R, t.unsqueeze(-1)], dim=-1), torch.tensor([0.0, 0.0, 0.0, 1.0], device=device).reshape(1, -1)], dim=-2)
+
+sources = edict(
+    images=scene.sources.images,
+    depths=scene.sources.depths
+)
 
 def render(T, frame_index):
     global model
